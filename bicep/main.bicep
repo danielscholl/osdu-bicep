@@ -69,7 +69,7 @@ param partitions array = [
 param ClusterSize string = 'CostOptimised'
 
 @description('Feature Flag on Private Link')
-param enablePrivateLink bool = true
+param enablePrivateLink bool = false
 
 @description('Optional. Customer Managed Encryption Key.')
 param cmekConfiguration object = {
