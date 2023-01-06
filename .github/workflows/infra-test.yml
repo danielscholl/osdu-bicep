@@ -168,6 +168,27 @@ jobs:
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           Install-Module -Name Az.KeyVault -Force
 
+      - name: Verify Resource Group Exists
+        id: hasResourceGroup
+        env:
+          RESOURCE_GROUP: ${{ steps.params.outputs.RESOURCEGROUP }}
+          LOCATION: ${{ steps.params.outputs.REGION }}
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            echo "RESOURCE_GROUP is $RESOURCE_GROUP"
+            echo "LOCATION is $LOCATION"
+
+            EXISTING=$(az group list --query  "[?name=='$RESOURCE_GROUP'].[name]" -otsv)
+
+            if [ "$EXISTING"  == "" ]
+              then
+                az group create --name $RESOURCE_GROUP --location $LOCATION
+              else
+                echo "Resource Group $RESOURCE_GROUP exists"
+            fi
+
       - name: Verify any active Azure Resource Group Deployments #These can mess up our deployment
         id: activedeps
         if: github.event.inputs.doVerifySteps == 'true'
