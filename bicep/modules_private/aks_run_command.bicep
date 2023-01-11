@@ -123,7 +123,7 @@ resource runAksCommand 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for
       fi
 
       echo "Sending command $command to AKS Cluster $aksName in $RG"
-      cmdOut=$(az aks command invoke -g $RG -n $aksName -o json --command "${command}")
+      cmdOut=$(az aks command invoke -g $RG -n $aksName -o json --command "${command}" 2>&1)
       echo $cmdOut
 
       jsonOutputString=$cmdOut
