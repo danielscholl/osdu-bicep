@@ -1,9 +1,6 @@
 @description('The name of the Azure Container Registry')
 param acrName string
 
-@description('The Subscription ID of the ACR')
-param acrSubId string = subscription().subscriptionId
-
 @description('The location to deploy the resources to')
 param location string = resourceGroup().location
 
@@ -106,10 +103,6 @@ resource createImportImage 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
         name: 'retrySleep'
         value: '5s'
       }
-      {
-        name: 'subscription'
-        value: acrSubId
-      }
     ]
     scriptContent: '''
       #!/bin/bash
@@ -118,15 +111,13 @@ resource createImportImage 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
       echo "Waiting on RBAC replication ($initialDelay)"
       sleep $initialDelay
       
-      az account show
-      
       #Retry loop to catch errors (usually RBAC delays, but 'Error copying blobs' is also not unheard of)
       retryLoopCount=0
       until [ $retryLoopCount -ge $retryMax ]
       do
         echo "Importing Image: $imageName into ACR: $acrName"
         echo "Sub: $subscription"
-        az acr import -n $acrName --source $imageName --force --subscription $subscription 2>&1 \
+        az acr import -n $acrName --source $imageName --force 2>&1 \
           && break
         sleep $retrySleep
         retryLoopCount=$((retryLoopCount+1))
