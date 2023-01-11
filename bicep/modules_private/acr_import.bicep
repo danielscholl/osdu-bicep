@@ -60,7 +60,7 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = if 
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', rbacRoleNeeded)
     principalId: useExistingManagedIdentity ? existingDepScriptId.properties.principalId : newDepScriptId.properties.principalId
     principalType: 'ServicePrincipal'
-    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : ''
+    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : null
   }
 }
 
