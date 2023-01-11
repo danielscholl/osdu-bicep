@@ -116,7 +116,6 @@ resource createImportImage 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
       until [ $retryLoopCount -ge $retryMax ]
       do
         echo "Importing Image: $imageName into ACR: $acrName"
-        echo "Sub: $subscription"
         az acr import -n $acrName --source $imageName --force 2>&1 \
           && break
         sleep $retrySleep
