@@ -644,6 +644,7 @@ module acrImport 'modules_private/acr_import.bicep' = if (!empty(serviceLayerCon
     acrName: registry.outputs.name
     location: location
     images: serviceLayerConfig.imageNames
+    crossTenant: crossTenant
   }
 }
 

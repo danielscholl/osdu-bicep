@@ -31,6 +31,9 @@ param commands array
 @description('A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate')
 param initialScriptDelay string = '120s'
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario')
+param crossTenant bool = false
+
 @allowed([
   'OnSuccess'
   'OnExpiration'
@@ -60,6 +63,7 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDe
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefId)
     principalId: useExistingManagedIdentity ? existingDepScriptId.properties.principalId : newDepScriptId.properties.principalId
     principalType: 'ServicePrincipal'
+    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : null
   }
 }]
 
@@ -119,7 +123,7 @@ resource runAksCommand 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for
       fi
 
       echo "Sending command $command to AKS Cluster $aksName in $RG"
-      cmdOut=$(az aks command invoke -g $RG -n $aksName -o json --command "${command}")
+      cmdOut=$(az aks command invoke -g $RG -n $aksName -o json --command "${command}" 2>&1)
       echo $cmdOut
 
       jsonOutputString=$cmdOut

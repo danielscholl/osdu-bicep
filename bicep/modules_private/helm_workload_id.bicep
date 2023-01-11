@@ -16,6 +16,9 @@ param tenantId string = subscription().tenantId
 @description('The namespace for the chart.')
 param namespace string = 'azure-workload-identity-system'
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario')
+param crossTenant bool = false
+
 var contributor='b24988ac-6180-42a0-ab88-20f7382dd24c'
 var rbacClusterAdmin='b1ff04bb-8a4e-4dc4-8eb5-8693973ce19b'
 
@@ -39,6 +42,7 @@ module aksRun './aks_run_command.bicep' = {
     commands: [
       formattedHelmCommands
     ]
+    crossTenant: crossTenant
   }
 }
 

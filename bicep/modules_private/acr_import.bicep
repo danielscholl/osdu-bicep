@@ -28,6 +28,9 @@ param images array
 @description('A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate')
 param initialScriptDelay string = '30s'
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario')
+param crossTenant bool = false
+
 @allowed([
   'OnSuccess'
   'OnExpiration'
@@ -57,6 +60,7 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = if 
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', rbacRoleNeeded)
     principalId: useExistingManagedIdentity ? existingDepScriptId.properties.principalId : newDepScriptId.properties.principalId
     principalType: 'ServicePrincipal'
+    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : null
   }
 }
 
@@ -112,9 +116,8 @@ resource createImportImage 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
       until [ $retryLoopCount -ge $retryMax ]
       do
         echo "Importing Image: $imageName into ACR: $acrName"
-        az acr import -n $acrName --source $imageName --force \
+        az acr import -n $acrName --source $imageName --force 2>&1 \
           && break
-
         sleep $retrySleep
         retryLoopCount=$((retryLoopCount+1))
       done
