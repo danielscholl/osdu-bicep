@@ -31,6 +31,9 @@ param commands array
 @description('A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate')
 param initialScriptDelay string = '120s'
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario')
+param crossTenant bool = false
+
 @allowed([
   'OnSuccess'
   'OnExpiration'
@@ -60,6 +63,7 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDe
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefId)
     principalId: useExistingManagedIdentity ? existingDepScriptId.properties.principalId : newDepScriptId.properties.principalId
     principalType: 'ServicePrincipal'
+    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : null
   }
 }]
 
