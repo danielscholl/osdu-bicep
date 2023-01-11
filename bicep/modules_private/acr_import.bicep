@@ -31,13 +31,16 @@ param images array
 @description('A delay before the script import operation starts. Primarily to allow Azure AAD Role Assignments to propagate')
 param initialScriptDelay string = '30s'
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario')
+param crossTenant bool = false
+
 @allowed([
   'OnSuccess'
   'OnExpiration'
   'Always'
 ])
 @description('When the script resource is cleaned up')
-param cleanupPreference string = 'OnExpiration'
+param cleanupPreference string = 'OnSuccess'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' existing = {
   name: acrName
@@ -60,6 +63,7 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = if 
     roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', rbacRoleNeeded)
     principalId: useExistingManagedIdentity ? existingDepScriptId.properties.principalId : newDepScriptId.properties.principalId
     principalType: 'ServicePrincipal'
+    delegatedManagedIdentityResourceId: crossTenant ? (useExistingManagedIdentity ? existingDepScriptId.id : newDepScriptId.id) : ''
   }
 }
 
