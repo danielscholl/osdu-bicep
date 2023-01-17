@@ -136,8 +136,11 @@ param roleAssignments array = [
   /* example
       {
         roleDefinitionIdOrName: 'Reader'
-        principalIds: [
-          '222222-2222-2222-2222-2222222222'
+        principals: [
+          {
+            id: '222222-2222-2222-2222-2222222222'
+            resourceId: '/subscriptions/111111-1111-1111-1111-1111111111/resourcegroups/rg-osdu-bicep/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ManagedIdentityName'
+          }
         ]
         principalType: 'ServicePrincipal'
       }
@@ -196,7 +199,7 @@ param metricsToEnable array = [
 @description('Optional. Customer Managed Encryption Key.')
 param kvKeyUri string = ''
 
-@description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a delegatedManagedIdentityResourceId must be included in roleAssignments.')
+@description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
 param crossTenant bool = false
 
 var name = 'dba-${replace(resourceName, '-', '')}${uniqueString(resourceGroup().id, resourceName)}'
@@ -382,11 +385,11 @@ module databaseaccount_rbac '.bicep/nested_rbac.bicep' = [for (roleAssignment, i
   name: '${deployment().name}-rbac-${index}'
   params: {
     description: contains(roleAssignment, 'description') ? roleAssignment.description : ''
-    principalIds: roleAssignment.principalIds
+    principals: roleAssignment.principals
     roleDefinitionIdOrName: roleAssignment.roleDefinitionIdOrName
     principalType: contains(roleAssignment, 'principalType') ? roleAssignment.principalType : ''
     resourceId: databaseAccount.id
-    delegatedManagedIdentityResourceId: crossTenant ? roleAssignment.delegatedManagedIdentityResourceId : ''
+    crossTenant: crossTenant
   }
 }]
 
