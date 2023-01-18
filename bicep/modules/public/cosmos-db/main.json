@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.11.1.770",
-      "templateHash": "10438466323161101751"
+      "version": "0.13.1.58284",
+      "templateHash": "16371637483759106991"
     }
   },
   "parameters": {
@@ -325,7 +325,7 @@
       "type": "bool",
       "defaultValue": false,
       "metadata": {
-        "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a delegatedManagedIdentityResourceId must be included in roleAssignments."
+        "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
       }
     },
     "privateLinkSettings": {
@@ -586,9 +586,7 @@
           "maxThroughput": {
             "value": "[parameters('maxThroughput')]"
           },
-          "containers": {
-            "value": "[if(contains(parameters('sqlDatabases')[copyIndex()], 'containers'), parameters('sqlDatabases')[copyIndex()].containers, createArray())]"
-          },
+          "containers": "[if(contains(parameters('sqlDatabases')[copyIndex()], 'containers'), createObject('value', parameters('sqlDatabases')[copyIndex()].containers), createObject('value', createArray()))]",
           "enableDefaultTelemetry": {
             "value": "[variables('enableReferencedModulesTelemetry')]"
           }
@@ -599,8 +597,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7157754146262647090"
+              "version": "0.13.1.58284",
+              "templateHash": "10157814525819413114"
             }
           },
           "parameters": {
@@ -721,8 +719,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.11.1.770",
-                      "templateHash": "9396199484594553158"
+                      "version": "0.13.1.58284",
+                      "templateHash": "6494983495030753329"
                     }
                   },
                   "parameters": {
@@ -902,9 +900,7 @@
           "maxThroughput": {
             "value": "[parameters('maxThroughput')]"
           },
-          "graphs": {
-            "value": "[if(contains(parameters('gremlinDatabases')[copyIndex()], 'graphs'), parameters('gremlinDatabases')[copyIndex()].graphs, createArray())]"
-          },
+          "graphs": "[if(contains(parameters('gremlinDatabases')[copyIndex()], 'graphs'), createObject('value', parameters('gremlinDatabases')[copyIndex()].graphs), createObject('value', createArray()))]",
           "enableDefaultTelemetry": {
             "value": "[variables('enableReferencedModulesTelemetry')]"
           }
@@ -915,8 +911,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "142069350192373083"
+              "version": "0.13.1.58284",
+              "templateHash": "2281214798785189196"
             }
           },
           "parameters": {
@@ -1024,12 +1020,8 @@
                   "enableDefaultTelemetry": {
                     "value": "[variables('enableReferencedModulesTelemetry')]"
                   },
-                  "automaticIndexing": {
-                    "value": "[if(contains(parameters('graphs')[copyIndex()], 'automaticIndexing'), parameters('graphs')[copyIndex()].automaticIndexing, true())]"
-                  },
-                  "partitionKeyPaths": {
-                    "value": "[if(not(empty(parameters('graphs')[copyIndex()].partitionKeyPaths)), parameters('graphs')[copyIndex()].partitionKeyPaths, createArray())]"
-                  }
+                  "automaticIndexing": "[if(contains(parameters('graphs')[copyIndex()], 'automaticIndexing'), createObject('value', parameters('graphs')[copyIndex()].automaticIndexing), createObject('value', true()))]",
+                  "partitionKeyPaths": "[if(not(empty(parameters('graphs')[copyIndex()].partitionKeyPaths)), createObject('value', parameters('graphs')[copyIndex()].partitionKeyPaths), createObject('value', createArray()))]"
                 },
                 "template": {
                   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -1037,8 +1029,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.11.1.770",
-                      "templateHash": "12157261947712267574"
+                      "version": "0.13.1.58284",
+                      "templateHash": "11007017926644196320"
                     }
                   },
                   "parameters": {
@@ -1195,23 +1187,19 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "description": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), parameters('roleAssignments')[copyIndex()].description, '')]"
-          },
-          "principalIds": {
-            "value": "[parameters('roleAssignments')[copyIndex()].principalIds]"
+          "description": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), createObject('value', parameters('roleAssignments')[copyIndex()].description), createObject('value', ''))]",
+          "principals": {
+            "value": "[parameters('roleAssignments')[copyIndex()].principals]"
           },
           "roleDefinitionIdOrName": {
             "value": "[parameters('roleAssignments')[copyIndex()].roleDefinitionIdOrName]"
           },
-          "principalType": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), parameters('roleAssignments')[copyIndex()].principalType, '')]"
-          },
+          "principalType": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), createObject('value', parameters('roleAssignments')[copyIndex()].principalType), createObject('value', ''))]",
           "resourceId": {
             "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name')))]"
           },
-          "delegatedManagedIdentityResourceId": {
-            "value": "[if(parameters('crossTenant'), parameters('roleAssignments')[copyIndex()].delegatedManagedIdentityResourceId, '')]"
+          "crossTenant": {
+            "value": "[parameters('crossTenant')]"
           }
         },
         "template": {
@@ -1220,8 +1208,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "3584409557580155732"
+              "version": "0.13.1.58284",
+              "templateHash": "8451379692843981129"
             }
           },
           "parameters": {
@@ -1232,10 +1220,10 @@
                 "description": "Optional. The description of the role assignment."
               }
             },
-            "principalIds": {
+            "principals": {
               "type": "array",
               "metadata": {
-                "description": "Required. The IDs of the principals to assign the role to."
+                "description": "Required. The IDs of the principals to assign the role to. A resourceId is required when used in a cross tenant scenario (i.e. crossTenant is true)"
               }
             },
             "principalType": {
@@ -1282,11 +1270,11 @@
                 "description": "Optional. Version of the condition."
               }
             },
-            "delegatedManagedIdentityResourceId": {
-              "type": "string",
-              "defaultValue": "",
+            "crossTenant": {
+              "type": "bool",
+              "defaultValue": false,
               "metadata": {
-                "description": "Optional. Id of the delegated managed identity resource."
+                "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
               }
             }
           },
@@ -1315,20 +1303,20 @@
             {
               "copy": {
                 "name": "roleAssignment",
-                "count": "[length(parameters('principalIds'))]"
+                "count": "[length(parameters('principals'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', last(split(parameters('resourceId'), '/')))]",
-              "name": "[guid(resourceId('Microsoft.DocumentDB/databaseAccounts', last(split(parameters('resourceId'), '/'))), parameters('principalIds')[copyIndex()], parameters('roleDefinitionIdOrName'))]",
+              "name": "[guid(resourceId('Microsoft.DocumentDB/databaseAccounts', last(split(parameters('resourceId'), '/'))), parameters('principals')[copyIndex()].id, parameters('roleDefinitionIdOrName'))]",
               "properties": {
                 "description": "[parameters('description')]",
                 "roleDefinitionId": "[if(contains(variables('builtInRoleNames'), parameters('roleDefinitionIdOrName')), variables('builtInRoleNames')[parameters('roleDefinitionIdOrName')], parameters('roleDefinitionIdOrName'))]",
-                "principalId": "[parameters('principalIds')[copyIndex()]]",
+                "principalId": "[parameters('principals')[copyIndex()].id]",
                 "principalType": "[if(not(empty(parameters('principalType'))), parameters('principalType'), null())]",
                 "condition": "[if(not(empty(parameters('condition'))), parameters('condition'), null())]",
                 "conditionVersion": "[if(and(not(empty(parameters('conditionVersion'))), not(empty(parameters('condition')))), parameters('conditionVersion'), null())]",
-                "delegatedManagedIdentityResourceId": "[if(not(empty(parameters('delegatedManagedIdentityResourceId'))), parameters('delegatedManagedIdentityResourceId'), null())]"
+                "delegatedManagedIdentityResourceId": "[if(parameters('crossTenant'), parameters('principals')[copyIndex()].resourceId, null())]"
               }
             }
           ]
@@ -1356,7 +1344,7 @@
             "value": "[parameters('databaseEndpointSecretName')]"
           },
           "value": {
-            "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name')))).documentEndpoint]"
+            "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15').documentEndpoint]"
           }
         },
         "template": {
@@ -1365,8 +1353,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {
@@ -1455,8 +1443,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {
@@ -1545,8 +1533,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {

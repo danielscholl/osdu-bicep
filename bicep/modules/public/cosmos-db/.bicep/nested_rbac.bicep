@@ -1,8 +1,16 @@
 @sys.description('Optional. The description of the role assignment.')
 param description string = ''
 
-@sys.description('Required. The IDs of the principals to assign the role to.')
-param principalIds array
+@sys.description('Required. The IDs of the principals to assign the role to. A resourceId is required when used in a cross tenant scenario (i.e. crossTenant is true)')
+param principals array
+  /* example
+      [
+        {
+          id: '222222-2222-2222-2222-2222222222'
+          resourceId: '/subscriptions/111111-1111-1111-1111-1111111111/resourcegroups/rg-osdu-bicep/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ManagedIdentityName'
+        }
+      ]
+  */
 
 @sys.description('Optional. The principal type of the assigned principal ID.')
 @allowed([
@@ -31,8 +39,8 @@ param condition string = ''
 ])
 param conditionVersion string = '2.0'
 
-@sys.description('Optional. Id of the delegated managed identity resource.')
-param delegatedManagedIdentityResourceId string = ''
+@sys.description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
+param crossTenant bool = false
 
 var builtInRoleNames = {
   Owner: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')
@@ -58,16 +66,16 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' exis
   name: last(split(resourceId, '/'))
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principalId in principalIds: {
-  name: guid(databaseAccount.id, principalId, roleDefinitionIdOrName)
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
+  name: guid(databaseAccount.id, principal.id, roleDefinitionIdOrName)
   properties: {
     description: description
     roleDefinitionId: contains(builtInRoleNames, roleDefinitionIdOrName) ? builtInRoleNames[roleDefinitionIdOrName] : roleDefinitionIdOrName
-    principalId: principalId
+    principalId: principal.id
     principalType: !empty(principalType) ? any(principalType) : null
     condition: !empty(condition) ? condition : null
     conditionVersion: !empty(conditionVersion) && !empty(condition) ? conditionVersion : null
-    delegatedManagedIdentityResourceId: !empty(delegatedManagedIdentityResourceId) ? delegatedManagedIdentityResourceId : null
+    delegatedManagedIdentityResourceId: crossTenant ? principal.resourceId : null
   }
   scope: databaseAccount
 }]
