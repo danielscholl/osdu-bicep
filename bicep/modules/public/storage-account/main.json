@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.11.1.770",
-      "templateHash": "12981137037548580504"
+      "version": "0.13.1.58284",
+      "templateHash": "10295457327684038729"
     }
   },
   "parameters": {
@@ -78,6 +78,13 @@
       "defaultValue": [],
       "metadata": {
         "description": "Optional. Array of Storage Tables to be created."
+      }
+    },
+    "crossTenant": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
       }
     },
     "roleAssignments": {
@@ -420,20 +427,19 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "description": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), parameters('roleAssignments')[copyIndex()].description, '')]"
-          },
-          "principalIds": {
-            "value": "[parameters('roleAssignments')[copyIndex()].principalIds]"
+          "description": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), createObject('value', parameters('roleAssignments')[copyIndex()].description), createObject('value', ''))]",
+          "principals": {
+            "value": "[parameters('roleAssignments')[copyIndex()].principals]"
           },
           "roleDefinitionIdOrName": {
             "value": "[parameters('roleAssignments')[copyIndex()].roleDefinitionIdOrName]"
           },
-          "principalType": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), parameters('roleAssignments')[copyIndex()].principalType, '')]"
-          },
+          "principalType": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), createObject('value', parameters('roleAssignments')[copyIndex()].principalType), createObject('value', ''))]",
           "resourceId": {
             "value": "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+          },
+          "crossTenant": {
+            "value": "[parameters('crossTenant')]"
           }
         },
         "template": {
@@ -442,17 +448,14 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "4109777488614566930"
+              "version": "0.13.1.58284",
+              "templateHash": "5790547434381822001"
             }
           },
           "parameters": {
             "description": {
               "type": "string",
               "defaultValue": ""
-            },
-            "principalIds": {
-              "type": "array"
             },
             "principalType": {
               "type": "string",
@@ -463,6 +466,19 @@
             },
             "resourceId": {
               "type": "string"
+            },
+            "crossTenant": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
+              }
+            },
+            "principals": {
+              "type": "array",
+              "metadata": {
+                "description": "Required. The IDs of the principals to assign the role to. A resourceId is required when used in a cross tenant scenario (i.e. crossTenant is true)"
+              }
             }
           },
           "variables": {
@@ -506,17 +522,18 @@
             {
               "copy": {
                 "name": "roleAssignment",
-                "count": "[length(parameters('principalIds'))]"
+                "count": "[length(parameters('principals'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('resourceId'), '/')))]",
-              "name": "[guid(last(split(parameters('resourceId'), '/')), parameters('principalIds')[copyIndex()], parameters('roleDefinitionIdOrName'))]",
+              "name": "[guid(last(split(parameters('resourceId'), '/')), parameters('principals')[copyIndex()].id, parameters('roleDefinitionIdOrName'))]",
               "properties": {
                 "description": "[parameters('description')]",
                 "roleDefinitionId": "[if(contains(variables('builtInRoleNames'), parameters('roleDefinitionIdOrName')), variables('builtInRoleNames')[parameters('roleDefinitionIdOrName')], parameters('roleDefinitionIdOrName'))]",
-                "principalId": "[parameters('principalIds')[copyIndex()]]",
-                "principalType": "[if(not(empty(parameters('principalType'))), parameters('principalType'), null())]"
+                "principalId": "[parameters('principals')[copyIndex()].id]",
+                "principalType": "[if(not(empty(parameters('principalType'))), parameters('principalType'), null())]",
+                "delegatedManagedIdentityResourceId": "[if(parameters('crossTenant'), parameters('principals')[copyIndex()].resourceId, null())]"
               }
             }
           ]
@@ -553,8 +570,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {
@@ -643,8 +660,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {
@@ -733,8 +750,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "7304298555457891820"
+              "version": "0.13.1.58284",
+              "templateHash": "16107441205299703534"
             }
           },
           "parameters": {

@@ -51,13 +51,19 @@ param tables array = [
   */
 ]
 
+@description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
+param crossTenant bool = false
+
 @description('Optional. Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
 param roleAssignments array = [
   /* example
       {
         roleDefinitionIdOrName: 'Reader'
-        principalIds: [
-          '222222-2222-2222-2222-2222222222'
+        principals: [
+          {
+            id: '222222-2222-2222-2222-2222222222'
+            resourceId: '/subscriptions/111111-1111-1111-1111-1111111111/resourcegroups/rg-osdu-bicep/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ManagedIdentityName'
+          }
         ]
         principalType: 'ServicePrincipal'
       }
@@ -252,10 +258,11 @@ module storage_rbac '.bicep/nested_rbac.bicep' = [for (roleAssignment, index) in
   name: '${deployment().name}-rbac-${index}'
   params: {
     description: contains(roleAssignment, 'description') ? roleAssignment.description : ''
-    principalIds: roleAssignment.principalIds
+    principals: roleAssignment.principals
     roleDefinitionIdOrName: roleAssignment.roleDefinitionIdOrName
     principalType: contains(roleAssignment, 'principalType') ? roleAssignment.principalType : ''
     resourceId: storage.id
+    crossTenant: crossTenant
   }
 }]
 
