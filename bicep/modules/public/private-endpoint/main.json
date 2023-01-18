@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.12.40.16777",
-      "templateHash": "13712824476116043490"
+      "version": "0.13.1.58284",
+      "templateHash": "13918084530796890990"
     }
   },
   "parameters": {
@@ -68,11 +68,18 @@
         "description": "Optional. Location for all Resources."
       }
     },
+    "crossTenant": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
+      }
+    },
     "roleAssignments": {
       "type": "array",
       "defaultValue": [],
       "metadata": {
-        "description": "Optional. Array of role assignment objects that contain the 'roleDefinitionIdOrName' and 'principalId' to define RBAC role assignments on this resource. In the roleDefinitionIdOrName attribute, you can provide either the display name of the role definition, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
+        "description": "Optional. Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep"
       }
     },
     "tags": {
@@ -177,8 +184,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.12.40.16777",
-              "templateHash": "2962080553890533733"
+              "version": "0.13.1.58284",
+              "templateHash": "10948839627963430016"
             }
           },
           "parameters": {
@@ -271,26 +278,20 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "description": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), parameters('roleAssignments')[copyIndex()].description, '')]"
+          "description": "[if(contains(parameters('roleAssignments')[copyIndex()], 'description'), createObject('value', parameters('roleAssignments')[copyIndex()].description), createObject('value', ''))]",
+          "principals": {
+            "value": "[parameters('roleAssignments')[copyIndex()].principals]"
           },
-          "principalIds": {
-            "value": "[parameters('roleAssignments')[copyIndex()].principalIds]"
-          },
-          "principalType": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), parameters('roleAssignments')[copyIndex()].principalType, '')]"
-          },
+          "principalType": "[if(contains(parameters('roleAssignments')[copyIndex()], 'principalType'), createObject('value', parameters('roleAssignments')[copyIndex()].principalType), createObject('value', ''))]",
           "roleDefinitionIdOrName": {
             "value": "[parameters('roleAssignments')[copyIndex()].roleDefinitionIdOrName]"
           },
-          "condition": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'condition'), parameters('roleAssignments')[copyIndex()].condition, '')]"
-          },
-          "delegatedManagedIdentityResourceId": {
-            "value": "[if(contains(parameters('roleAssignments')[copyIndex()], 'delegatedManagedIdentityResourceId'), parameters('roleAssignments')[copyIndex()].delegatedManagedIdentityResourceId, '')]"
-          },
+          "condition": "[if(contains(parameters('roleAssignments')[copyIndex()], 'condition'), createObject('value', parameters('roleAssignments')[copyIndex()].condition), createObject('value', ''))]",
           "resourceId": {
             "value": "[resourceId('Microsoft.Network/privateEndpoints', if(greater(length(variables('name')), 64), substring(variables('name'), 0, 64), variables('name')))]"
+          },
+          "crossTenant": {
+            "value": "[parameters('crossTenant')]"
           }
         },
         "template": {
@@ -299,17 +300,11 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.12.40.16777",
-              "templateHash": "17398245239701469576"
+              "version": "0.13.1.58284",
+              "templateHash": "11434261217921661174"
             }
           },
           "parameters": {
-            "principalIds": {
-              "type": "array",
-              "metadata": {
-                "description": "Required. The IDs of the principals to assign the role to."
-              }
-            },
             "roleDefinitionIdOrName": {
               "type": "string",
               "metadata": {
@@ -361,11 +356,17 @@
                 "description": "Optional. Version of the condition."
               }
             },
-            "delegatedManagedIdentityResourceId": {
-              "type": "string",
-              "defaultValue": "",
+            "crossTenant": {
+              "type": "bool",
+              "defaultValue": false,
               "metadata": {
-                "description": "Optional. Id of the delegated managed identity resource."
+                "description": "Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object."
+              }
+            },
+            "principals": {
+              "type": "array",
+              "metadata": {
+                "description": "Required. The IDs of the principals to assign the role to. A resourceId is required when used in a cross tenant scenario (i.e. crossTenant is true)"
               }
             }
           },
@@ -380,20 +381,20 @@
             {
               "copy": {
                 "name": "roleAssignment",
-                "count": "[length(parameters('principalIds'))]"
+                "count": "[length(parameters('principals'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Network/privateEndpoints/{0}', last(split(parameters('resourceId'), '/')))]",
-              "name": "[guid(resourceId('Microsoft.Network/privateEndpoints', last(split(parameters('resourceId'), '/'))), parameters('principalIds')[copyIndex()], parameters('roleDefinitionIdOrName'))]",
+              "name": "[guid(resourceId('Microsoft.Network/privateEndpoints', last(split(parameters('resourceId'), '/'))), parameters('principals')[copyIndex()].id, parameters('roleDefinitionIdOrName'))]",
               "properties": {
                 "description": "[parameters('description')]",
                 "roleDefinitionId": "[if(contains(variables('builtInRoleNames'), parameters('roleDefinitionIdOrName')), variables('builtInRoleNames')[parameters('roleDefinitionIdOrName')], parameters('roleDefinitionIdOrName'))]",
-                "principalId": "[parameters('principalIds')[copyIndex()]]",
+                "principalId": "[parameters('principals')[copyIndex()].id]",
                 "principalType": "[if(not(empty(parameters('principalType'))), parameters('principalType'), null())]",
                 "condition": "[if(not(empty(parameters('condition'))), parameters('condition'), null())]",
                 "conditionVersion": "[if(and(not(empty(parameters('conditionVersion'))), not(empty(parameters('condition')))), parameters('conditionVersion'), null())]",
-                "delegatedManagedIdentityResourceId": "[if(not(empty(parameters('delegatedManagedIdentityResourceId'))), parameters('delegatedManagedIdentityResourceId'), null())]"
+                "delegatedManagedIdentityResourceId": "[if(parameters('crossTenant'), parameters('principals')[copyIndex()].resourceId, null())]"
               }
             }
           ]
