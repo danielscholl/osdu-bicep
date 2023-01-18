@@ -1,8 +1,21 @@
 param description string = ''
-param principalIds array
 param principalType string = ''
 param roleDefinitionIdOrName string
 param resourceId string
+
+@sys.description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
+param crossTenant bool = false
+
+@sys.description('Required. The IDs of the principals to assign the role to. A resourceId is required when used in a cross tenant scenario (i.e. crossTenant is true)')
+param principals array
+  /* example
+      [
+        {
+          id: '222222-2222-2222-2222-2222222222'
+          resourceId: '/subscriptions/111111-1111-1111-1111-1111111111/resourcegroups/rg-osdu-bicep/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ManagedIdentityName'
+        }
+      ]
+  */
 
 var builtInRoleNames = {
   Owner: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')
@@ -16,13 +29,14 @@ resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2022-0
   name: last(split(resourceId, '/'))
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principalId in principalIds: {
-  name: guid(appConfiguration.name, principalId, roleDefinitionIdOrName)
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal  in principals: {
+  name: guid(appConfiguration.name, principal.id, roleDefinitionIdOrName)
   properties: {
     description: description
     roleDefinitionId: contains(builtInRoleNames, roleDefinitionIdOrName) ? builtInRoleNames[roleDefinitionIdOrName] : roleDefinitionIdOrName
-    principalId: principalId
+    principalId: principal.id
     principalType: !empty(principalType) ? principalType : null
+    delegatedManagedIdentityResourceId: crossTenant ? principal.resourceId : null
   }
   scope: appConfiguration
 }]
