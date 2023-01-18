@@ -29,8 +29,24 @@ param privateDnsZoneGroup object = {}
 @description('Optional. Location for all Resources.')
 param location string = resourceGroup().location
 
-@description('Optional. Array of role assignment objects that contain the \'roleDefinitionIdOrName\' and \'principalId\' to define RBAC role assignments on this resource. In the roleDefinitionIdOrName attribute, you can provide either the display name of the role definition, or its fully qualified ID in the following format: \'/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11\'.')
-param roleAssignments array = []
+@description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
+param crossTenant bool = false
+
+@description('Optional. Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
+param roleAssignments array = [
+  /* example
+      {
+        roleDefinitionIdOrName: 'Reader'
+        principals: [
+          {
+            id: '222222-2222-2222-2222-2222222222'
+            resourceId: '/subscriptions/111111-1111-1111-1111-1111111111/resourcegroups/rg-osdu-bicep/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ManagedIdentityName'
+          }
+        ]
+        principalType: 'ServicePrincipal'
+      }
+  */
+]
 
 @description('Tags.')
 param tags object = {}
@@ -91,12 +107,12 @@ module privateEndpoint_roleAssignments './.bicep/nested_rbac.bicep' = [for (role
   
   params: {
     description: contains(roleAssignment, 'description') ? roleAssignment.description : ''
-    principalIds: roleAssignment.principalIds
+    principals: roleAssignment.principals
     principalType: contains(roleAssignment, 'principalType') ? roleAssignment.principalType : ''
     roleDefinitionIdOrName: roleAssignment.roleDefinitionIdOrName
     condition: contains(roleAssignment, 'condition') ? roleAssignment.condition : ''
-    delegatedManagedIdentityResourceId: contains(roleAssignment, 'delegatedManagedIdentityResourceId') ? roleAssignment.delegatedManagedIdentityResourceId : ''
     resourceId: privateEndpoint.id
+    crossTenant: crossTenant
   }
 }]
 
