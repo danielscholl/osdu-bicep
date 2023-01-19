@@ -428,7 +428,7 @@ var vnetId = {
 
 var subnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${subnetName}'
   
-module network 'br:osdubicep.azurecr.io/public/virtual-network:1.0.5' = if (virtualNetworkNewOrExisting == 'new') {
+module network 'br:osdubicep.azurecr.io/public/virtual-network:1.0.7' = if (virtualNetworkNewOrExisting == 'new') {
   name: '${commonLayerConfig.name}-virtual-network'
   params: {
     resourceName: virtualNetworkName
@@ -470,12 +470,18 @@ module network 'br:osdubicep.azurecr.io/public/virtual-network:1.0.5' = if (virt
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Contributor'
-        principalIds: [
-          stampIdentity.outputs.principalId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
       }
     ]
+
+    // Set Cross Tenant Flag
+    crossTenant: crossTenant
   }
 }
 
@@ -489,7 +495,7 @@ module network 'br:osdubicep.azurecr.io/public/virtual-network:1.0.5' = if (virt
 |__|\__\ |_______|   |__|         \__/ /__/     \__\ \______/  |_______|    |__|                                                                     
 */
 
-module keyvault 'br:osdubicep.azurecr.io/public/azure-keyvault:1.0.3' = {
+module keyvault 'br:osdubicep.azurecr.io/public/azure-keyvault:1.0.5' = {
   name: '${commonLayerConfig.name}-azure-keyvault'
   params: {
     resourceName: commonLayerConfig.name
@@ -552,13 +558,18 @@ module keyvault 'br:osdubicep.azurecr.io/public/azure-keyvault:1.0.3' = {
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Reader'
-        principalIds: [
-          stampIdentity.outputs.principalId
-          applicationClientId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
       }
     ]
+
+    // Set Cross Tenant Flag
+    crossTenant: crossTenant
   }
 }
 
@@ -607,7 +618,7 @@ module vaultEndpoint 'br:osdubicep.azurecr.io/public/private-endpoint:1.0.1' = i
 | _| `._____||_______| \______| |__| |_______/       |__|     | _| `._____|   |__|                                                                                                                              
 */
 
-module registry 'br:osdubicep.azurecr.io/public/container-registry:1.0.2' = {
+module registry 'br:osdubicep.azurecr.io/public/container-registry:1.0.4' = {
   name: '${commonLayerConfig.name}-container-registry'
   params: {
     resourceName: commonLayerConfig.name
@@ -628,12 +639,18 @@ module registry 'br:osdubicep.azurecr.io/public/container-registry:1.0.2' = {
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'ACR Pull'
-        principalIds: [
-          stampIdentity.outputs.principalId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
       }
     ]
+
+    // Set Cross Tenant Flag
+    crossTenant: crossTenant
   }
 }
 
@@ -657,7 +674,7 @@ module acrImport 'modules_private/acr_import.bicep' = if (!empty(serviceLayerCon
 |_______/       |__|      \______/  | _| `._____/__/     \__\ \______| |_______|                                                                 
 */
 
-module configStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.5' = {
+module configStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.7' = {
   name: '${commonLayerConfig.name}-azure-storage'
   params: {
     resourceName: commonLayerConfig.name
@@ -679,13 +696,18 @@ module configStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.5' = {
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Contributor'
-        principalIds: [
-          stampIdentity.outputs.principalId
-          applicationClientId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
       }
     ]
+
+    // Set Cross Tenant Flag
+    crossTenant: crossTenant
 
     // Hookup Customer Managed Encryption Key
     cmekConfiguration: cmekConfiguration
@@ -729,7 +751,7 @@ module storageEndpoint 'br:osdubicep.azurecr.io/public/private-endpoint:1.0.1' =
  \______| | _| `._____/__/     \__\ | _|      |__|  |__| 
 */
 
-module database 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = {
+module database 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.17' = {
   name: '${commonLayerConfig.name}-cosmos-db'
   params: {
     resourceName: commonLayerConfig.name
@@ -760,12 +782,13 @@ module database 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = {
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Contributor'
-        principalIds: [
-          stampIdentity.outputs.principalId
-          applicationClientId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
-        delegatedManagedIdentityResourceId: stampIdentity.outputs.id
       }
     ]
 
@@ -786,7 +809,7 @@ module database 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = {
     databasePrimaryKeySecretName: commonLayerConfig.secrets.cosmosPrimaryKey
     databaseConnectionStringSecretName: commonLayerConfig.secrets.cosmosConnectionString
 
-    // Cross Tenant
+    // Set Cross Tenant Flag
     crossTenant: crossTenant
   }
 }
@@ -822,7 +845,7 @@ module graphEndpoint 'br:osdubicep.azurecr.io/public/private-endpoint:1.0.1' = i
 // | _|    /__/     \__\ | _| `._____|   |__|     |__|     |__|     |__|  \______/  |__| \__| |_______/                                 
 // */
 
-module partitionStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.5' = [for (partition, index) in partitions: {
+module partitionStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.7' = [for (partition, index) in partitions: {
   name: '${partitionLayerConfig.name}-azure-storage-${index}'
   params: {
     resourceName: 'data${index}${uniqueString(partition.name)}'
@@ -846,13 +869,18 @@ module partitionStorage 'br:osdubicep.azurecr.io/public/storage-account:1.0.5' =
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Contributor'
-        principalIds: [
-          stampIdentity.outputs.principalId
-          applicationClientId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
       }
     ]
+
+    // Set Cross Tenant Flag
+    crossTenant: crossTenant
 
     // Hookup Customer Managed Encryption Key
     cmekConfiguration: cmekConfiguration
@@ -877,7 +905,7 @@ module partitionStorageEndpoint 'br:osdubicep.azurecr.io/public/private-endpoint
   }
 }]
 
-module partitionDb 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = [for (partition, index) in partitions: {
+module partitionDb 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.17' = [for (partition, index) in partitions: {
   name: '${partitionLayerConfig.name}-cosmos-db-${index}'
   params: {
     resourceName: 'data${index}${substring(uniqueString(partition.name), 0, 6)}'
@@ -907,12 +935,13 @@ module partitionDb 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = [for (par
     roleAssignments: [
       {
         roleDefinitionIdOrName: 'Contributor'
-        principalIds: [
-          stampIdentity.outputs.principalId
-          applicationClientId
+        principals: [
+          {
+            id: stampIdentity.outputs.principalId
+            resourceId: stampIdentity.outputs.id
+          }
         ]
         principalType: 'ServicePrincipal'
-        delegatedManagedIdentityResourceId: stampIdentity.outputs.id
       }
     ]
 
@@ -933,7 +962,7 @@ module partitionDb 'br:osdubicep.azurecr.io/public/cosmos-db:1.0.15' = [for (par
     databasePrimaryKeySecretName: '${partition.name}-${partitionLayerConfig.secrets.cosmosPrimaryKey}'
     databaseConnectionStringSecretName: '${partition.name}-${partitionLayerConfig.secrets.cosmosConnectionString}'
 
-    // Cross Tenant
+    // Set Cross Tenant Flag
     crossTenant: crossTenant
   }
 }]
