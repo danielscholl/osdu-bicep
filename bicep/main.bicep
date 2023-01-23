@@ -1029,13 +1029,13 @@ var elasticPoolPresets = {
   CostOptimised : {
     vmSize: 'Standard_DS3_v2'
   }
-  // 4 vCPU, 15 GiB RAM, 28 GiB SSD, (12800) IOPS, Ephemeral OS Disk
+  // 8 vCPU, 28 GiB RAM, 56 GiB SSD, (32000) IOPS, Ephemeral OS Disk
   Standard : {
-    vmSize: 'Standard_DS3_v2'
+    vmSize: 'Standard_DS4_v2'
   }
-  // 4 vCPU, 15 GiB RAM, 28 GiB SSD, (12800) IOPS, Ephemeral OS Disk
+  // 16 vCPU, 56 GiB RAM, 112 GiB SSD, (64000) IOPS, Ephemeral OS Disk
   HighSpec : {
-    vmSize: 'Standard_DS3_v2'
+    vmSize: 'Standard_DS5_v2'
   }
 }
 
