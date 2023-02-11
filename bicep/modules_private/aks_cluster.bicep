@@ -42,7 +42,7 @@ param admin_ids array = []
 param skuTier string = 'Free'
 
 @description('Specifies the version of Kubernetes specified when creating the managed cluster.')
-param version string = '1.24.3'
+param version string = '1.24.9'
 
 @description('Specifies the upgrade channel for auto upgrade. Allowed values include rapid, stable, patch, node-image, none.')
 @allowed([
