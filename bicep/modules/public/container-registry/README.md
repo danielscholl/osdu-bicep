@@ -39,7 +39,7 @@ This module deploys either a simple Container Registry or one with diagnostics e
 ### Example 1
 
 ```bicep
-module example 'br:osdubicep.azurecr.io/bicep/modules/public/container-registry:1.0.2' = {
+module example 'br:osdubicep.azurecr.io/bicep/modules/public/container-registry:1.0.5' = {
   name: 'container_registry'
   params: {
     resourceName: `acr${unique(resourceGroup().name)}'
@@ -52,7 +52,7 @@ module example 'br:osdubicep.azurecr.io/bicep/modules/public/container-registry:
 ### Example 2
 
 ```bicep
-module example 'br:osdubicep.azurecr.io/bicep/modules/public/container-registry:1.0.2' = {
+module example 'br:osdubicep.azurecr.io/bicep/modules/public/container-registry:1.0.5' = {
   name: 'container_registry'
   params: {
     resourceName: `acr${unique(resourceGroup().name)}'

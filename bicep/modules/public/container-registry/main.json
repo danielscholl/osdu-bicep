@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "3434955989811075838"
+      "version": "0.16.2.56959",
+      "templateHash": "3224061273913356084"
     }
   },
   "parameters": {
@@ -182,7 +182,7 @@
   "resources": [
     {
       "type": "Microsoft.ContainerRegistry/registries",
-      "apiVersion": "2022-02-01-preview",
+      "apiVersion": "2022-12-01",
       "name": "[if(greater(length(variables('name')), 50), substring(variables('name'), 0, 50), variables('name'))]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
@@ -266,7 +266,7 @@
       "condition": "[and(equals(parameters('sku'), 'Premium'), variables('enablePrivateLink'))]",
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2020-06-01",
-      "name": "[format('{0}/dnsgroupname', variables('privateEndpointName'))]",
+      "name": "[format('{0}/{1}', variables('privateEndpointName'), 'dnsgroupname')]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
@@ -304,7 +304,7 @@
         "count": "[length(parameters('roleAssignments'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-rbac-{1}', deployment().name, copyIndex())]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -333,8 +333,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "13785339940670730224"
+              "version": "0.16.2.56959",
+              "templateHash": "5244430470475126663"
             }
           },
           "parameters": {
@@ -408,17 +408,17 @@
   "outputs": {
     "name": {
       "type": "string",
-      "value": "[if(greater(length(variables('name')), 50), substring(variables('name'), 0, 50), variables('name'))]",
       "metadata": {
         "description": "The name of the container registry."
-      }
+      },
+      "value": "[if(greater(length(variables('name')), 50), substring(variables('name'), 0, 50), variables('name'))]"
     },
     "loginServer": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', if(greater(length(variables('name')), 50), substring(variables('name'), 0, 50), variables('name'))), '2022-02-01-preview').loginServer]",
       "metadata": {
         "description": "Specifies the name of the fully qualified name of the login server."
-      }
+      },
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', if(greater(length(variables('name')), 50), substring(variables('name'), 0, 50), variables('name'))), '2022-12-01').loginServer]"
     }
   }
 }

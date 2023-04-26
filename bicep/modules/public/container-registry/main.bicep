@@ -101,7 +101,7 @@ var diagnosticsMetrics = [for metric in metricsToEnable: {
 }]
 
 // Create Azure Container Registry
-resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
+resource acr 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   name: length(name) > 50 ? substring(name, 0, 50) : name
   location: location
   tags: tags
@@ -205,7 +205,8 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-07-01' = if (s
 }
 
 resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = if (sku == 'Premium' && enablePrivateLink) {
-  name: '${privateEndpoint.name}/dnsgroupname'
+  parent: privateEndpoint
+  name: 'dnsgroupname'
   properties: {
     privateDnsZoneConfigs: [
       {
