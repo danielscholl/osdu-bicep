@@ -20,7 +20,18 @@ module database '../main.bicep' = {
     sqlDatabases: [
       { 
         name: 'db01'
-        containers: []
+        containers: [
+          {
+            name: 'container'
+            kind: 'Hash'
+            paths: [
+              '/id'
+            ]
+            uniqueKeyPaths: [
+              '/id'
+            ]
+          }
+        ]
       }
     ]
   }

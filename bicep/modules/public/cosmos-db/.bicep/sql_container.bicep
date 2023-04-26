@@ -16,6 +16,9 @@ param tags object = {}
 @description('Optional. List of paths using which data within the container can be partitioned.')
 param paths array = []
 
+@description('Optional. List of unique key paths using which data within the container can be partitioned.')
+param uniqueKeyPaths array = []
+
 @description('Optional. Indicates the kind of algorithm used for partitioning.')
 @allowed([
   'Hash'
@@ -57,6 +60,13 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
       partitionKey: {
         paths: paths
         kind: kind
+      }
+      uniqueKeyPolicy: empty(uniqueKeyPaths) ? null : {
+        uniqueKeys: [
+          {
+            paths: uniqueKeyPaths
+          }
+        ]
       }
     }
     options: contains(databaseAccount.properties.capabilities, { name: 'EnableServerless' }) || throughput == -1 ? null : {

@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "16371637483759106991"
+      "version": "0.16.2.56959",
+      "templateHash": "692756270669382771"
     }
   },
   "parameters": {
@@ -521,7 +521,7 @@
       "condition": "[variables('enablePrivateLink')]",
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
       "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}-link', variables('privateDNSZoneName'), variables('privateDNSZoneName'))]",
+      "name": "[format('{0}/{1}', variables('privateDNSZoneName'), format('{0}-link', variables('privateDNSZoneName')))]",
       "location": "global",
       "properties": {
         "registrationEnabled": false,
@@ -544,7 +544,7 @@
       "condition": "[variables('enablePrivateLink')]",
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2022-01-01",
-      "name": "[format('{0}/dnsgroupname', variables('privateEndpointName'))]",
+      "name": "[format('{0}/{1}', variables('privateEndpointName'), 'dnsgroupname')]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
@@ -566,7 +566,7 @@
         "count": "[length(parameters('sqlDatabases'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-{1}', deployment().name, parameters('sqlDatabases')[copyIndex()].name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -597,8 +597,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "10157814525819413114"
+              "version": "0.16.2.56959",
+              "templateHash": "11026842919452399369"
             }
           },
           "parameters": {
@@ -686,7 +686,7 @@
                 "count": "[length(parameters('containers'))]"
               },
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
+              "apiVersion": "2022-09-01",
               "name": "[format('{0}-{1}-sql-{2}', deployment().name, parameters('name'), copyIndex())]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -719,8 +719,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.13.1.58284",
-                      "templateHash": "6494983495030753329"
+                      "version": "0.16.2.56959",
+                      "templateHash": "3987175024047996725"
                     }
                   },
                   "parameters": {
@@ -761,6 +761,13 @@
                       "defaultValue": [],
                       "metadata": {
                         "description": "Optional. List of paths using which data within the container can be partitioned."
+                      }
+                    },
+                    "uniqueKeyPaths": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Optional. List of unique key paths using which data within the container can be partitioned."
                       }
                     },
                     "kind": {
@@ -809,7 +816,8 @@
                           "partitionKey": {
                             "paths": "[parameters('paths')]",
                             "kind": "[parameters('kind')]"
-                          }
+                          },
+                          "uniqueKeyPolicy": "[if(empty(parameters('uniqueKeyPaths')), null(), createObject('uniqueKeys', createArray(createObject('paths', parameters('uniqueKeyPaths')))))]"
                         },
                         "options": "[if(or(contains(reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName')), '2022-08-15').capabilities, createObject('name', 'EnableServerless')), equals(parameters('throughput'), -1)), null(), createObject('throughput', parameters('throughput')))]"
                       }
@@ -818,24 +826,24 @@
                   "outputs": {
                     "name": {
                       "type": "string",
-                      "value": "[parameters('name')]",
                       "metadata": {
                         "description": "The name of the container."
-                      }
+                      },
+                      "value": "[parameters('name')]"
                     },
                     "resourceId": {
                       "type": "string",
-                      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('databaseAccountName'), parameters('sqlDatabaseName'), parameters('name'))]",
                       "metadata": {
                         "description": "The resource ID of the container."
-                      }
+                      },
+                      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('databaseAccountName'), parameters('sqlDatabaseName'), parameters('name'))]"
                     },
                     "resourceGroupName": {
                       "type": "string",
-                      "value": "[resourceGroup().name]",
                       "metadata": {
                         "description": "The name of the resource group the container was created in."
-                      }
+                      },
+                      "value": "[resourceGroup().name]"
                     }
                   }
                 }
@@ -848,24 +856,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the SQL database."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the SQL database."
-              }
+              },
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the SQL database was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -880,7 +888,7 @@
         "count": "[length(parameters('gremlinDatabases'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-{1}', deployment().name, parameters('gremlinDatabases')[copyIndex()].name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -911,8 +919,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "2281214798785189196"
+              "version": "0.16.2.56959",
+              "templateHash": "17388289659429914951"
             }
           },
           "parameters": {
@@ -1000,7 +1008,7 @@
                 "count": "[length(parameters('graphs'))]"
               },
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
+              "apiVersion": "2022-09-01",
               "name": "[format('{0}-{1}-graph-{2}', deployment().name, parameters('name'), parameters('graphs')[copyIndex()].name)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -1029,8 +1037,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.13.1.58284",
-                      "templateHash": "11007017926644196320"
+                      "version": "0.16.2.56959",
+                      "templateHash": "933017375529243120"
                     }
                   },
                   "parameters": {
@@ -1117,24 +1125,24 @@
                   "outputs": {
                     "name": {
                       "type": "string",
-                      "value": "[parameters('name')]",
                       "metadata": {
                         "description": "The name of the graph."
-                      }
+                      },
+                      "value": "[parameters('name')]"
                     },
                     "resourceId": {
                       "type": "string",
-                      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/graphs', parameters('databaseAccountName'), parameters('gremlinDatabaseName'), parameters('name'))]",
                       "metadata": {
                         "description": "The resource ID of the graph."
-                      }
+                      },
+                      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/graphs', parameters('databaseAccountName'), parameters('gremlinDatabaseName'), parameters('name'))]"
                     },
                     "resourceGroupName": {
                       "type": "string",
-                      "value": "[resourceGroup().name]",
                       "metadata": {
                         "description": "The name of the resource group the graph was created in."
-                      }
+                      },
+                      "value": "[resourceGroup().name]"
                     }
                   }
                 }
@@ -1147,24 +1155,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the Gremlin database."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/gremlinDatabases', parameters('databaseAccountName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the Gremlin database."
-              }
+              },
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/gremlinDatabases', parameters('databaseAccountName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the Gremlin database was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -1179,7 +1187,7 @@
         "count": "[length(parameters('roleAssignments'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-rbac-{1}', deployment().name, copyIndex())]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1208,8 +1216,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "8451379692843981129"
+              "version": "0.16.2.56959",
+              "templateHash": "1838371839130646629"
             }
           },
           "parameters": {
@@ -1329,7 +1337,7 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('databaseEndpointSecretName'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-secret-name', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1353,8 +1361,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -1371,7 +1379,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -1390,24 +1398,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -1419,7 +1427,7 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('databasePrimaryKeySecretName'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-secret-key', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1443,8 +1451,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -1461,7 +1469,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -1480,24 +1488,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -1509,7 +1517,7 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('databaseConnectionStringSecretName'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-secret-accountName', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1533,8 +1541,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -1551,7 +1559,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -1570,24 +1578,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -1600,38 +1608,38 @@
   "outputs": {
     "name": {
       "type": "string",
-      "value": "[if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))]",
       "metadata": {
         "description": "The name of the database account."
-      }
+      },
+      "value": "[if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))]"
     },
     "id": {
       "type": "string",
-      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name')))]",
       "metadata": {
         "description": "The resource ID of the database account."
-      }
+      },
+      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name')))]"
     },
     "resourceGroupName": {
       "type": "string",
-      "value": "[resourceGroup().name]",
       "metadata": {
         "description": "The name of the resource group the database account was created in."
-      }
+      },
+      "value": "[resourceGroup().name]"
     },
     "systemAssignedPrincipalId": {
       "type": "string",
-      "value": "[if(and(parameters('systemAssignedIdentity'), contains(reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').identity, 'principalId')), reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').identity.principalId, '')]",
       "metadata": {
         "description": "The principal ID of the system assigned identity."
-      }
+      },
+      "value": "[if(and(parameters('systemAssignedIdentity'), contains(reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').identity, 'principalId')), reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').identity.principalId, '')]"
     },
     "location": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').location]",
       "metadata": {
         "description": "The location the resource was deployed into."
-      }
+      },
+      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', if(greater(length(variables('name')), 44), substring(variables('name'), 0, 44), variables('name'))), '2022-08-15', 'full').location]"
     }
   }
 }
