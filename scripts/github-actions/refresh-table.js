@@ -133,13 +133,13 @@ async function createPullRequestToUpdateReadme(github, context, newReadme) {
   });
 
   // Create a pull request.
-  const { data: prData } = await github.rest.pulls.create({
-    ...context.repo,
-    title: "🤖 Refresh module table",
-    head: branch,
-    base: "main",
-    maintainer_can_modify: true,
-  });
+  // const { data: prData } = await github.rest.pulls.create({
+  //   ...context.repo,
+  //   title: "🤖 Refresh module table",
+  //   head: branch,
+  //   base: "main",
+  //   maintainer_can_modify: true,
+  // });
 
   return prData.html_url;
 }
