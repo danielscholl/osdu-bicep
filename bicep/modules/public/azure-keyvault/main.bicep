@@ -134,7 +134,6 @@ var diagnosticsMetrics = [for metric in metricsToEnable: {
 
 var enableSecrets = contains(secretsObject, 'secrets') && length(secretsObject.secrets) > 0
 
-
 // Create Azure Key Vault
 resource keyvault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: length(name) > 24 ? substring(name, 0, 24) : name

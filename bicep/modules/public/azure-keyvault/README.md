@@ -41,7 +41,7 @@ This module deploys a key vault.
 ### Example 1
 
 ```bicep
-module kv 'br:osdubicep.azurecr.io/public/keyvault:1.0.3' = {
+module kv 'br:osdubicep.azurecr.io/public/azure-keyvault:1.0.6' = {
   name: 'azure_keyvault'
   params: {
     resourceName: 'acr${unique(resourceGroup().name)}'
@@ -54,7 +54,7 @@ module kv 'br:osdubicep.azurecr.io/public/keyvault:1.0.3' = {
 ### Example 2
 
 ```bicep
-module kv 'br:osdubicep.azurecr.io/public/keyvault:1.0.3' = {
+module kv 'br:osdubicep.azurecr.io/public/azure-keyvault:1.0.6' = {
   name: 'azure_keyvault'
   params: {
     resourceName: 'acr${unique(resourceGroup().name)}'

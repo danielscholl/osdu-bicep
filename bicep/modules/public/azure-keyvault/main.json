@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "3857576575718101507"
+      "version": "0.16.2.56959",
+      "templateHash": "13986288899958053807"
     }
   },
   "parameters": {
@@ -224,11 +224,11 @@
       }
     },
     {
-      "condition": "[variables('enableSecrets')]",
       "copy": {
         "name": "kv_secrets",
         "count": "[length(parameters('secretsObject').secrets)]"
       },
+      "condition": "[variables('enableSecrets')]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-04-01-preview",
       "name": "[format('{0}/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), parameters('secretsObject').secrets[copyIndex()].secretName)]",
@@ -350,7 +350,7 @@
         "count": "[length(parameters('roleAssignments'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-rbac-{1}', deployment().name, copyIndex())]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -379,8 +379,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "14494040952504903701"
+              "version": "0.16.2.56959",
+              "templateHash": "13389989610276247716"
             }
           },
           "parameters": {
@@ -457,17 +457,17 @@
   "outputs": {
     "name": {
       "type": "string",
-      "value": "[if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name'))]",
       "metadata": {
         "description": "The name of the azure keyvault."
-      }
+      },
+      "value": "[if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name'))]"
     },
     "id": {
       "type": "string",
-      "value": "[resourceId('Microsoft.KeyVault/vaults', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]",
       "metadata": {
         "description": "The resourceId of the azure keyvault."
-      }
+      },
+      "value": "[resourceId('Microsoft.KeyVault/vaults', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
     }
   }
 }
