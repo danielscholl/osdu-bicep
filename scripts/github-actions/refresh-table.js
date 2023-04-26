@@ -141,7 +141,8 @@ async function createPullRequestToUpdateReadme(github, context, newReadme) {
   //   maintainer_can_modify: true,
   // });
 
-  return prData.html_url;
+  // return prData.html_url;
+  return "Please Create a Pull Request on your own."
 }
 
 /**
