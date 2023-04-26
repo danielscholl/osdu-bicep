@@ -51,6 +51,32 @@ param tables array = [
   */
 ]
 
+@description('Optional. Array of Storage Shares to be created.')
+param shares array = [
+  /* example
+  'one'
+  'two'
+  */
+]
+
+@description('Optional. The maximum size of the share, in gigabytes. Must be greater than 0, and less than or equal to 5120 (5TB). For Large File Shares, the maximum size is 102400 (100TB).')
+param shareQuota int = 5120
+
+@allowed([
+  'NFS'
+  'SMB'
+])
+@description('Optional. The authentication protocol that is used for the file share. Can only be specified when creating a share.')
+param enabledProtocols string = 'SMB'
+
+@allowed([
+  'AllSquash'
+  'NoRootSquash'
+  'RootSquash'
+])
+@description('Optional. Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service. Toggling the root squash behavior reduces the rights of the root user for NFS shares.')
+param rootSquash string = 'NoRootSquash'
+
 @description('Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment\'s principal object.')
 param crossTenant bool = false
 
@@ -159,7 +185,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     userAssignedIdentities: {
       '${cmekConfiguration.identityId}': {}
     }
-  } : json('null')
+  } : null
 
   properties: {
     accessTier: accessTier
@@ -207,7 +233,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
 }
 
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-04-01' = {
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
   parent: storage
   name: 'default'
   properties: deleteRetention > 0 ? {
@@ -231,8 +257,27 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-04-01
   }
 }
 
+resource tableServices 'Microsoft.Storage/storageAccounts/tableServices@2022-05-01' = {
+  name: 'default'
+  parent: storage
+  properties: {}
+}
+
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' = {
+  name: 'default'
+  parent: storage
+  properties: {
+    protocolSettings: {}
+    shareDeleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
+  }
+}
+
 resource storage_containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = [for item in containers: {
-  name: '${storage.name}/default/${item}'
+  parent: blobServices
+  name: item
   properties: {
     defaultEncryptionScope:      '$account-encryption-key'
     denyEncryptionScopeOverride: false
@@ -241,7 +286,18 @@ resource storage_containers 'Microsoft.Storage/storageAccounts/blobServices/cont
 }]
 
 resource storage_tables 'Microsoft.Storage/storageAccounts/tableServices/tables@2022-05-01' = [for item in tables: {
-  name: '${storage.name}/default/${item}'
+  parent: tableServices
+  name: item
+}]
+
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = [for item in shares: {
+  parent: fileServices
+  name: item
+  properties: {
+    shareQuota: shareQuota
+    rootSquash: enabledProtocols == 'NFS' ? rootSquash : null
+    enabledProtocols: enabledProtocols
+  }
 }]
 
 // Apply Resource Lock
@@ -341,7 +397,8 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = if (e
 }
 
 resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (enablePrivateLink) {
-  name: '${privateEndpoint.name}/dnsgroupname'
+  parent: privateEndpoint
+  name: 'dnsgroupname'
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -380,14 +437,29 @@ resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
 @description('Optional: Key Vault Name to store secrets into')
 param keyVaultName string = ''
 
-@description('Optional: To save storage account name into vault set the secret hame.')
+@description('Optional: To save storage account name into vault set the secret name.')
 param storageAccountSecretName string = ''
 
-@description('Optional: To save storage account key into vault set the secret hame.')
+@description('Optional: To save storage account key into vault set the secret name.')
 param storageAccountKeySecretName string = ''
 
-@description('Optional: To save storage account connectionstring into vault set the secret hame.')
+@description('Optional: To save storage account connectionstring into vault set the secret name.')
 param storageAccountConnectionString string = ''
+
+@description('Optional: Current Date Time')
+param basetime string = utcNow('u')
+
+@description('Optional: Default SAS TOken Properties to download Blob.')
+param sasProperties object = {
+  signedServices: 'b'
+  signedPermission: 'rl'
+  signedExpiry: dateTimeAdd(basetime, 'P1Y')
+  signedResourceTypes: 'sco'
+  signedProtocol: 'https'
+}
+
+@description('Optional: To save storage account sas token into vault set the properties.')
+param saveToken bool = false
 
 module secretStorageAccountName  '.bicep/keyvault_secrets.bicep' = if (!empty(keyVaultName) && !empty(storageAccountSecretName)) {
   name: '${deployment().name}-secret-name'
@@ -408,10 +480,19 @@ module secretStorageAccountKey '.bicep/keyvault_secrets.bicep' =  if (!empty(key
 }
 
 module secretStorageAccountConnection '.bicep/keyvault_secrets.bicep' =  if (!empty(keyVaultName) && !empty(storageAccountConnectionString)) {
-  name: '${deployment().name}-secret-accountName'
+  name: '${deployment().name}-secret-connectionstring'
   params: {
     keyVaultName: keyVaultName
     name: storageAccountConnectionString
     value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${storage.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+  }
+}
+
+module secretSASToken  '.bicep/keyvault_secrets.bicep' = if (!empty(keyVaultName) && saveToken) {
+  name: '${deployment().name}-secret-sasToken'
+  params: {
+    keyVaultName: keyVaultName
+    name: '${storage.name}-SAS'
+    value: listAccountSAS(storage.name, '2022-05-01', sasProperties).accountSasToken
   }
 }

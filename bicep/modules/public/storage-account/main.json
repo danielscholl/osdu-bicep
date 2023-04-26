@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.13.1.58284",
-      "templateHash": "10295457327684038729"
+      "version": "0.16.2.56959",
+      "templateHash": "3094248001290824732"
     }
   },
   "parameters": {
@@ -79,6 +79,43 @@
       "metadata": {
         "description": "Optional. Array of Storage Tables to be created."
       }
+    },
+    "shares": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Optional. Array of Storage Shares to be created."
+      }
+    },
+    "shareQuota": {
+      "type": "int",
+      "defaultValue": 5120,
+      "metadata": {
+        "description": "Optional. The maximum size of the share, in gigabytes. Must be greater than 0, and less than or equal to 5120 (5TB). For Large File Shares, the maximum size is 102400 (100TB)."
+      }
+    },
+    "enabledProtocols": {
+      "type": "string",
+      "defaultValue": "SMB",
+      "metadata": {
+        "description": "Optional. The authentication protocol that is used for the file share. Can only be specified when creating a share."
+      },
+      "allowedValues": [
+        "NFS",
+        "SMB"
+      ]
+    },
+    "rootSquash": {
+      "type": "string",
+      "defaultValue": "NoRootSquash",
+      "metadata": {
+        "description": "Optional. Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service. Toggling the root squash behavior reduces the rights of the root user for NFS shares."
+      },
+      "allowedValues": [
+        "AllSquash",
+        "NoRootSquash",
+        "RootSquash"
+      ]
     },
     "crossTenant": {
       "type": "bool",
@@ -200,21 +237,48 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Optional: To save storage account name into vault set the secret hame."
+        "description": "Optional: To save storage account name into vault set the secret name."
       }
     },
     "storageAccountKeySecretName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Optional: To save storage account key into vault set the secret hame."
+        "description": "Optional: To save storage account key into vault set the secret name."
       }
     },
     "storageAccountConnectionString": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Optional: To save storage account connectionstring into vault set the secret hame."
+        "description": "Optional: To save storage account connectionstring into vault set the secret name."
+      }
+    },
+    "basetime": {
+      "type": "string",
+      "defaultValue": "[utcNow('u')]",
+      "metadata": {
+        "description": "Optional: Current Date Time"
+      }
+    },
+    "sasProperties": {
+      "type": "object",
+      "defaultValue": {
+        "signedServices": "b",
+        "signedPermission": "rl",
+        "signedExpiry": "[dateTimeAdd(parameters('basetime'), 'P1Y')]",
+        "signedResourceTypes": "sco",
+        "signedProtocol": "https"
+      },
+      "metadata": {
+        "description": "Optional: Default SAS TOken Properties to download Blob."
+      }
+    },
+    "saveToken": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional: To save storage account sas token into vault set the properties."
       }
     }
   },
@@ -264,7 +328,7 @@
         "name": "[parameters('sku')]"
       },
       "kind": "StorageV2",
-      "identity": "[if(variables('enableCMEK'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', parameters('cmekConfiguration').identityId), createObject())), json('null'))]",
+      "identity": "[if(variables('enableCMEK'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', parameters('cmekConfiguration').identityId), createObject())), null())]",
       "properties": {
         "accessTier": "[parameters('accessTier')]",
         "minimumTlsVersion": "TLS1_2",
@@ -274,9 +338,33 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2022-05-01",
       "name": "[format('{0}/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]",
       "properties": "[if(greater(parameters('deleteRetention'), 0), createObject('changeFeed', createObject('enabled', true()), 'restorePolicy', createObject('enabled', true(), 'days', 6), 'isVersioningEnabled', true(), 'deleteRetentionPolicy', createObject('enabled', true(), 'days', parameters('deleteRetention'))), createObject('deleteRetentionPolicy', createObject('enabled', false(), 'allowPermanentDelete', false())))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/tableServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]",
+      "properties": {
+        "protocolSettings": {},
+        "shareDeleteRetentionPolicy": {
+          "enabled": true,
+          "days": 7
+        }
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
       ]
@@ -288,14 +376,14 @@
       },
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2022-05-01",
-      "name": "[format('{0}/default/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), parameters('containers')[copyIndex()])]",
+      "name": "[format('{0}/{1}/{2}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default', parameters('containers')[copyIndex()])]",
       "properties": {
         "defaultEncryptionScope": "$account-encryption-key",
         "denyEncryptionScopeOverride": false,
         "publicAccess": "None"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]"
       ]
     },
     {
@@ -305,9 +393,26 @@
       },
       "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
       "apiVersion": "2022-05-01",
-      "name": "[format('{0}/default/{1}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), parameters('tables')[copyIndex()])]",
+      "name": "[format('{0}/{1}/{2}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default', parameters('tables')[copyIndex()])]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/tableServices', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "fileShare",
+        "count": "[length(parameters('shares'))]"
+      },
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}/{2}', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default', parameters('shares')[copyIndex()])]",
+      "properties": {
+        "shareQuota": "[parameters('shareQuota')]",
+        "rootSquash": "[if(equals(parameters('enabledProtocols'), 'NFS'), parameters('rootSquash'), null())]",
+        "enabledProtocols": "[parameters('enabledProtocols')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), 'default')]"
       ]
     },
     {
@@ -381,7 +486,7 @@
       "condition": "[variables('enablePrivateLink')]",
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2022-01-01",
-      "name": "[format('{0}/dnsgroupname', variables('privateEndpointName'))]",
+      "name": "[format('{0}/{1}', variables('privateEndpointName'), 'dnsgroupname')]",
       "properties": {
         "privateDnsZoneConfigs": [
           {
@@ -419,7 +524,7 @@
         "count": "[length(parameters('roleAssignments'))]"
       },
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-rbac-{1}', deployment().name, copyIndex())]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -448,8 +553,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "5790547434381822001"
+              "version": "0.16.2.56959",
+              "templateHash": "734070779681746519"
             }
           },
           "parameters": {
@@ -546,7 +651,7 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('storageAccountSecretName'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-secret-name', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -570,8 +675,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -588,7 +693,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -607,24 +712,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -636,7 +741,7 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('storageAccountKeySecretName'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2022-09-01",
       "name": "[format('{0}-secret-key', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -660,8 +765,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -678,7 +783,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -697,24 +802,24 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
-              }
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -726,8 +831,8 @@
     {
       "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('storageAccountConnectionString'))))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "[format('{0}-secret-accountName', deployment().name)]",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}-secret-connectionstring', deployment().name)]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -750,8 +855,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.13.1.58284",
-              "templateHash": "16107441205299703534"
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
             }
           },
           "parameters": {
@@ -768,7 +873,7 @@
               }
             },
             "value": {
-              "type": "secureString",
+              "type": "securestring",
               "metadata": {
                 "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
               }
@@ -787,24 +892,114 @@
           "outputs": {
             "name": {
               "type": "string",
-              "value": "[parameters('name')]",
               "metadata": {
                 "description": "The name of the secret."
-              }
+              },
+              "value": "[parameters('name')]"
             },
             "resourceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]",
               "metadata": {
                 "description": "The resource ID of the secret."
-              }
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
             },
             "resourceGroupName": {
               "type": "string",
-              "value": "[resourceGroup().name]",
               "metadata": {
                 "description": "The name of the resource group the secret was created in."
+              },
+              "value": "[resourceGroup().name]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+      ]
+    },
+    {
+      "condition": "[and(not(empty(parameters('keyVaultName'))), parameters('saveToken'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}-secret-sasToken', deployment().name)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "name": {
+            "value": "[format('{0}-SAS', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
+          },
+          "value": {
+            "value": "[listAccountSAS(if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')), '2022-05-01', parameters('sasProperties')).accountSasToken]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.16.2.56959",
+              "templateHash": "13234384176658043502"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "Conditional. The name of the parent key vault. Required if the template is used in a standalone deployment."
               }
+            },
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. The name of the secret."
+              }
+            },
+            "value": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Required. The value of the secret. NOTE: \"value\" will never be returned from the service, as APIs using this model are is intended for internal use in ARM deployments. Users should use the data-plane REST service for interaction with vault secrets."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('name'))]",
+              "properties": {
+                "value": "[parameters('value')]"
+              }
+            }
+          ],
+          "outputs": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the secret."
+              },
+              "value": "[parameters('name')]"
+            },
+            "resourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the secret."
+              },
+              "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('name'))]"
+            },
+            "resourceGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the resource group the secret was created in."
+              },
+              "value": "[resourceGroup().name]"
             }
           }
         }
@@ -817,17 +1012,17 @@
   "outputs": {
     "id": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]",
       "metadata": {
         "description": "The resource ID."
-      }
+      },
+      "value": "[resourceId('Microsoft.Storage/storageAccounts', if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name')))]"
     },
     "name": {
       "type": "string",
-      "value": "[if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name'))]",
       "metadata": {
         "description": "The name of the resource."
-      }
+      },
+      "value": "[if(greater(length(variables('name')), 24), substring(variables('name'), 0, 24), variables('name'))]"
     }
   }
 }

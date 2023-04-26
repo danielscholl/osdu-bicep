@@ -8,11 +8,13 @@ This module supports the following features.
 
 - Containers
 - Tables
+- Shares
 - Role Assignments
 - Diagnostics
 - Private Link (Secure network)
 - Customer Managed Encryption Keys
 - Point in Time Restore
+- SAS Secrets
 
 ## Parameters
 
@@ -26,6 +28,10 @@ This module supports the following features.
 | `accessTier`                            | `string` | No       | Specifies the storage account access tier.                                                                                                                                                                                                                                    |
 | `containers`                            | `array`  | No       | Optional. Array of Storage Containers to be created.                                                                                                                                                                                                                          |
 | `tables`                                | `array`  | No       | Optional. Array of Storage Tables to be created.                                                                                                                                                                                                                              |
+| `shares`                                | `array`  | No       | Optional. Array of Storage Shares to be created.                                                                                                                                                                                                                              |
+| `shareQuota`                            | `int`    | No       | Optional. The maximum size of the share, in gigabytes. Must be greater than 0, and less than or equal to 5120 (5TB). For Large File Shares, the maximum size is 102400 (100TB).                                                                                               |
+| `enabledProtocols`                      | `string` | No       | Optional. The authentication protocol that is used for the file share. Can only be specified when creating a share.                                                                                                                                                           |
+| `rootSquash`                            | `string` | No       | Optional. Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service. Toggling the root squash behavior reduces the rights of the root user for NFS shares.                                                                            |
 | `crossTenant`                           | `bool`   | No       | Optional. Indicates if the module is used in a cross tenant scenario. If true, a resourceId must be provided in the role assignment's principal object.                                                                                                                       |
 | `roleAssignments`                       | `array`  | No       | Optional. Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep |
 | `diagnosticWorkspaceId`                 | `string` | No       | Optional. Resource ID of the diagnostic log analytics workspace.                                                                                                                                                                                                              |
@@ -39,9 +45,12 @@ This module supports the following features.
 | `deleteRetention`                       | `int`    | No       | Amount of days the soft deleted data is stored and available for recovery. 0 is off.                                                                                                                                                                                          |
 | `privateLinkSettings`                   | `object` | No       | Settings Required to Enable Private Link                                                                                                                                                                                                                                      |
 | `keyVaultName`                          | `string` | No       | Optional: Key Vault Name to store secrets into                                                                                                                                                                                                                                |
-| `storageAccountSecretName`              | `string` | No       | Optional: To save storage account name into vault set the secret hame.                                                                                                                                                                                                        |
-| `storageAccountKeySecretName`           | `string` | No       | Optional: To save storage account key into vault set the secret hame.                                                                                                                                                                                                         |
-| `storageAccountConnectionString`        | `string` | No       | Optional: To save storage account connectionstring into vault set the secret hame.                                                                                                                                                                                            |
+| `storageAccountSecretName`              | `string` | No       | Optional: To save storage account name into vault set the secret name.                                                                                                                                                                                                        |
+| `storageAccountKeySecretName`           | `string` | No       | Optional: To save storage account key into vault set the secret name.                                                                                                                                                                                                         |
+| `storageAccountConnectionString`        | `string` | No       | Optional: To save storage account connectionstring into vault set the secret name.                                                                                                                                                                                            |
+| `basetime`                              | `string` | No       | Optional: Current Date Time                                                                                                                                                                                                                                                   |
+| `sasProperties`                         | `object` | No       | Optional: Default SAS TOken Properties to download Blob.                                                                                                                                                                                                                      |
+| `saveToken`                             | `bool`   | No       | Optional: To save storage account sas token into vault set the properties.                                                                                                                                                                                                    |
 
 ## Outputs
 
@@ -55,7 +64,7 @@ This module supports the following features.
 ### Example 1
 
 ```bicep
-module storage 'br:osdubicep.azurecr.io/public/storage-account:1.0.4' = {
+module storage 'br:osdubicep.azurecr.io/public/storage-account:1.0.8' = {
   name: 'storage_account'
   params: {
     resourceName: resourceName
@@ -68,7 +77,7 @@ module storage 'br:osdubicep.azurecr.io/public/storage-account:1.0.4' = {
 ### Example 2
 
 ```bicep
-module storage 'br:osdubicep.azurecr.io/public/storage-account:1.0.4' = {
+module storage 'br:osdubicep.azurecr.io/public/storage-account:1.0.8' = {
   name: 'storage_account'
   params: {
     resourceName: resourceName

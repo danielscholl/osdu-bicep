@@ -142,7 +142,7 @@ async function createPullRequestToUpdateReadme(github, context, newReadme) {
   // });
 
   // return prData.html_url;
-  return "Please Create a Pull Request on your own."
+  return "Please Create a Pull Request on your own.";
 }
 
 /**
