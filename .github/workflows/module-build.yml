@@ -25,14 +25,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 7.0.x
 
       # Adding a step to explicitly install the latest Bicep CLI because there is
       # always a delay in updating Bicep CLI in the job runner environments.
       - name: Install Bicep
         shell: pwsh
         run: |
-          az bicep install --version v0.11.1
+          az bicep install --version v0.16.1
 
       # - name: Install the latest Bicep CLI
       #   run: |
